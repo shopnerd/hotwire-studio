@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 380" width="760" height="380" font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#b85a2c"/></marker>
+    <marker id="dm" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9" fill="none" stroke="#2a2823" stroke-width="1.4"/></marker>
+  </defs>
+  <rect width="760" height="380" fill="#fbf9f4"/>
+
+  <!-- FRONT VIEW -->
+  <text x="20" y="28" font-size="13" font-weight="600" fill="#2a2823" letter-spacing="1">FRONT VIEW · from the operator</text>
+  <rect x="40" y="290" width="330" height="14" fill="#e9e4d8" stroke="#2a2823"/>
+  <text x="205" y="322" font-size="11" fill="#5c574d" text-anchor="middle">vacuum table</text>
+  <rect x="150" y="225" width="130" height="65" fill="#f3e6c8" stroke="#2a2823"/>
+  <text x="215" y="262" font-size="11" fill="#5c574d" text-anchor="middle">foam block</text>
+  <!-- towers -->
+  <rect x="52" y="70" width="12" height="220" fill="#2a2823"/>
+  <rect x="346" y="70" width="12" height="220" fill="#2a2823"/>
+  <rect x="46" y="148" width="24" height="18" fill="#fbf9f4" stroke="#2a2823" stroke-width="1.5"/>
+  <rect x="340" y="148" width="24" height="18" fill="#fbf9f4" stroke="#2a2823" stroke-width="1.5"/>
+  <line x1="70" y1="157" x2="340" y2="157" stroke="#b85a2c" stroke-width="2.5"/>
+  <text x="205" y="148" font-size="12" fill="#b85a2c" text-anchor="middle" font-weight="600">hot wire (0.4 mm)</text>
+  <!-- Y and Z arrows -->
+  <line x1="30" y1="190" x2="30" y2="110" stroke="#b85a2c" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="24" y="210" font-size="15" font-weight="700" fill="#2a2823" text-anchor="middle">Y</text>
+  <line x1="380" y1="190" x2="380" y2="110" stroke="#b85a2c" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="380" y="210" font-size="15" font-weight="700" fill="#2a2823" text-anchor="middle">Z</text>
+  <text x="58" y="58" font-size="12" font-weight="600" fill="#2a2823" text-anchor="middle">LEFT</text>
+  <text x="58" y="44" font-size="11" fill="#5c574d" text-anchor="middle">X / Y</text>
+  <text x="352" y="58" font-size="12" font-weight="600" fill="#2a2823" text-anchor="middle">RIGHT</text>
+  <text x="352" y="44" font-size="11" fill="#5c574d" text-anchor="middle">A / Z</text>
+  <!-- span dimension -->
+  <line x1="64" y1="345" x2="346" y2="345" stroke="#2a2823" marker-start="url(#dm)" marker-end="url(#dm)"/>
+  <line x1="64" y1="335" x2="64" y2="355" stroke="#2a2823"/><line x1="346" y1="335" x2="346" y2="355" stroke="#2a2823"/>
+  <text x="205" y="368" font-size="12" fill="#2a2823" text-anchor="middle">wire span 882.65 mm</text>
+
+  <line x1="405" y1="20" x2="405" y2="360" stroke="#d8d2c4" stroke-dasharray="3 4"/>
+
+  <!-- SIDE VIEW -->
+  <text x="425" y="28" font-size="13" font-weight="600" fill="#2a2823" letter-spacing="1">SIDE VIEW · one tower</text>
+  <text x="438" y="60" font-size="11" fill="#5c574d">operator</text>
+  <text x="438" y="74" font-size="11" fill="#5c574d">(front)</text>
+  <rect x="470" y="290" width="270" height="14" fill="#e9e4d8" stroke="#2a2823"/>
+  <rect x="470" y="232" width="200" height="58" fill="#f3e6c8" stroke="#2a2823"/>
+  <rect x="595" y="80" width="12" height="210" fill="#2a2823" opacity=".9"/>
+  <rect x="589" y="168" width="24" height="18" fill="#fbf9f4" stroke="#2a2823" stroke-width="1.5"/>
+  <circle cx="601" cy="177" r="4.5" fill="#b85a2c"/>
+  <text x="584" y="210" font-size="11" fill="#b85a2c" text-anchor="end">wire, end-on</text>
+  <line x1="470" y1="318" x2="740" y2="318" stroke="#2a2823" stroke-width="3"/>
+  <text x="680" y="335" font-size="11" fill="#5c574d">lead screw + rails</text>
+  <!-- zero -->
+  <circle cx="470" cy="290" r="7" fill="none" stroke="#b85a2c" stroke-width="2"/>
+  <line x1="463" y1="290" x2="477" y2="290" stroke="#b85a2c" stroke-width="1.5"/><line x1="470" y1="283" x2="470" y2="297" stroke="#b85a2c" stroke-width="1.5"/>
+  <text x="470" y="352" font-size="12" font-weight="600" fill="#b85a2c" text-anchor="middle">ZERO</text>
+  <text x="470" y="367" font-size="11" fill="#5c574d" text-anchor="middle">table front edge</text>
+  <line x1="470" y1="300" x2="470" y2="338" stroke="#b85a2c" stroke-dasharray="2 3"/>
+  <!-- X and Y arrows -->
+  <line x1="480" y1="120" x2="560" y2="120" stroke="#b85a2c" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="482" y="110" font-size="13" font-weight="700" fill="#2a2823">X · A</text>
+  <text x="482" y="140" font-size="11" fill="#5c574d">toward the back</text>
+  <line x1="690" y1="210" x2="690" y2="130" stroke="#b85a2c" stroke-width="2" marker-end="url(#ah)"/>
+  <text x="698" y="160" font-size="13" font-weight="700" fill="#2a2823">Y · Z</text>
+  <text x="698" y="175" font-size="11" fill="#5c574d">up</text>
+</svg>

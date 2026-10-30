@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" width="760" height="300" font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif">
+  <rect width="760" height="300" fill="#fbf9f4"/>
+  <text x="20" y="26" font-size="13" font-weight="600" fill="#2a2823" letter-spacing="1">KERF · drawn about 10× too big so you can see it</text>
+  <!-- part -->
+  <path d="M120 250 L120 100 L330 100 L330 170 L450 170 L450 100 L640 100 L640 250 Z" fill="#e6e3dc" stroke="#2a2823" stroke-width="1.6"/>
+  <text x="380" y="225" font-size="13" fill="#2a2823" text-anchor="middle" font-weight="600">part</text>
+  <!-- wire path -->
+  <path d="M106 250 L106 100 A14 14 0 0 1 120 86 L330 86 A14 14 0 0 1 344 100 L344 156 L436 156 L436 100 A14 14 0 0 1 450 86 L640 86 A14 14 0 0 1 654 100 L654 250 A14 14 0 0 1 640 264 L120 264 A14 14 0 0 1 106 250 Z" fill="none" stroke="#b85a2c" stroke-width="2" stroke-dasharray="7 4"/>
+  <!-- wire melt zone -->
+  <circle cx="230" cy="86" r="14" fill="#b85a2c" fill-opacity=".18" stroke="#b85a2c"/>
+  <circle cx="230" cy="86" r="2.5" fill="#b85a2c"/>
+  <line x1="230" y1="86" x2="230" y2="100" stroke="#2a2823" stroke-width="1"/>
+  <text x="236" y="70" font-size="11" fill="#2a2823">wire centre runs 1.5 mm outside the line</text>
+  <!-- callouts -->
+  <g font-size="11" fill="#2a2823">
+    <line x1="652" y1="88" x2="664" y2="60" stroke="#2a2823"/><text x="748" y="40" text-anchor="end">outside corner: wire arcs round,</text><text x="748" y="54" text-anchor="end" fill="#5c574d">corner stays sharp</text>
+    <line x1="344" y1="156" x2="300" y2="200" stroke="#2a2823"/><text x="150" y="205">inside corner: wire can't reach</text><text x="150" y="219" fill="#5c574d">the very corner, comes out rounded</text>
+  </g>
+  <line x1="40" y1="282" x2="64" y2="282" stroke="#2a2823" stroke-width="1.6"/><text x="70" y="286" font-size="11" fill="#2a2823">part outline (your DXF)</text>
+  <line x1="230" y1="282" x2="254" y2="282" stroke="#b85a2c" stroke-width="2" stroke-dasharray="7 4"/><text x="260" y="286" font-size="11" fill="#2a2823">wire path in the G-code</text>
+</svg>

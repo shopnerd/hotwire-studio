@@ -33,13 +33,19 @@ function bounds(list) {
 function SideView(cv, onChange) {
   this.cv = cv; this.scene = null; this.view = null; this.onChange = onChange;
   let drag = null;
-  cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY }; cv.setPointerCapture(e.pointerId); });
   cv.addEventListener('pointermove', e => {
     if (!drag || !this.view) return;
     this.view.ox += e.clientX - drag.x; this.view.oy += e.clientY - drag.y;
-    drag = { x: e.clientX, y: e.clientY }; this.draw();
+    drag.x = e.clientX; drag.y = e.clientY; this.draw();
   });
-  cv.addEventListener('pointerup', () => { drag = null; });
+  cv.addEventListener('pointerup', e => {
+    const d = drag; drag = null;
+    if (!d || !this.view || !this.onPick) return;
+    if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > 4) return; // that was a pan, not a click
+    const r = cv.getBoundingClientRect(), V = this.view;
+    this.onPick([(e.clientX - r.left - V.ox) / V.s, (V.oy - (e.clientY - r.top)) / V.s], V.s);
+  });
   cv.addEventListener('wheel', e => {
     e.preventDefault(); if (!this.view) return;
     const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
@@ -96,6 +102,19 @@ SideView.prototype.draw = function () {
   ctx.setLineDash([]); ctx.lineWidth = 1.6;
   poly(ctx, S.faceL, map); ctx.strokeStyle = C.left; ctx.stroke();
   poly(ctx, S.faceR, map); ctx.strokeStyle = C.right; ctx.stroke();
+  // sync points: user / DXF pairs bold and numbered, automatic ones faint
+  let n = 0;
+  for (const m of S.syncMarks || []) {
+    const a = map(m.L), c = map(m.R);
+    if (!m.user) { ctx.strokeStyle = 'rgba(184,90,44,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(c[0], c[1]); ctx.stroke(); ctx.setLineDash([]); continue; }
+    n++;
+    ctx.strokeStyle = '#b85a2c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(c[0], c[1]); ctx.stroke();
+    for (const [q, col] of [[a, C.left], [c, C.right]]) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q[0], q[1], 4.5, 0, 7); ctx.fill(); }
+    ctx.fillStyle = m.from === 'dxf' ? C.ink2 : '#b85a2c'; ctx.beginPath(); ctx.arc(a[0] - 11, a[1] - 11, 8, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '600 10.5px IBM Plex Mono, monospace'; ctx.textAlign = 'center'; ctx.fillText(String(n), a[0] - 11, a[1] - 7.5); ctx.textAlign = 'left';
+    ctx.font = '11px IBM Plex Sans, sans-serif';
+  }
+  if (S.pickPending) { const q = map(S.pickPending); ctx.strokeStyle = '#b85a2c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q[0], q[1], 7, 0, 7); ctx.stroke(); }
   // start point
   if (S.faceL.length) { const q = map(S.faceL[0]); ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(q[0], q[1], 3.5, 0, 7); ctx.fill(); ctx.fillText('start', q[0] + 6, q[1] - 5); }
   // wire now
@@ -164,6 +183,7 @@ View3D.prototype.draw = function () {
     for (let i = 0; i < n; i += every) line([[S.sL, ...S.partL[i]], [S.sR, ...S.partR[i]]], 'rgba(141,140,134,0.45)', 0.8);
     line(S.partL.map(p => [S.sL, p[0], p[1]]), C.left, 1.4);
     line(S.partR.map(p => [S.sR, p[0], p[1]]), C.right, 1.4);
+    for (const m of S.syncMarks || []) if (m.user) line([[S.sL, ...m.L], [S.sR, ...m.R]], '#b85a2c', 2);
   } else {
     line(S.faceL.map(p => [S.sL, p[0], p[1]]), C.left, 1.2);
     line(S.faceR.map(p => [S.sR, p[0], p[1]]), C.right, 1.2);

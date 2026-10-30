@@ -22,6 +22,7 @@
       <option value="">Examples…</option>
     </select>
     <label class="btn" title="Preview any .nc / .gcode file, e.g. one DevFoam made">Preview .nc<input id="fileNc" type="file" accept=".nc,.gcode,.ngc,.tap,.txt" hidden></label>
+    <a class="btn" href="learn/" title="Training guide: safety, the machine, making G-code, running a cut">Guide</a>
     <button id="btnSave" title="Download this setup as JSON">Save</button>
     <label class="btn" title="Open a saved setup">Open<input id="fileOpen" type="file" accept=".json,application/json" hidden></label>
     <button id="btnDownload" class="primary" title="Download the G-code for GRBL Hotwire">Download G-code</button>
@@ -58,6 +59,15 @@
       <label class="row"><span>Measured at</span>
         <select data-k="ref"><option value="bbox">Lower-left of outline</option><option value="le">Leading edge point</option><option value="te">Trailing edge point</option></select></label>
       <p class="hint">Type the dX / dY between the faces here. This replaces DevFoam's offset tool, and you don't need to re-draw anything.</p>
+    </section>
+
+    <section>
+      <h2>Sync points</h2>
+      <p class="hint" style="margin-top:0">Spots that must cut together on the two faces. Use them on tapers between different shapes. Without any, the app matches the start, leading edge and corners.</p>
+      <div class="sync-btns"><button id="btnSyncAdd" class="small">Add pair</button><button id="btnSyncClear" class="small ghost">Clear added pairs</button></div>
+      <label class="row check"><input data-k="syncFromDxf" type="checkbox"><span>Use sync points drawn in the DXFs</span></label>
+      <ol class="sync-list" id="syncList"></ol>
+      <p class="hint">In CAD, put a <b>point</b> or a tiny <b>circle</b> (2 mm radius or less) on the outline. Give both faces the same number, in the same order round the shape.</p>
     </section>
 
     <section>
@@ -101,6 +111,7 @@
     <div class="viewbox">
       <div class="vhead"><strong>Side view</strong> <span class="muted">looking along the wire</span>
         <div class="legend"><span><i class="ln part"></i>Part</span><span><i class="ln l"></i>Left face cut</span><span><i class="ln r"></i>Right face cut</span><span><i class="ln dl"></i>Left tower</span><span><i class="ln dr"></i>Right tower</span></div>
+        <span id="pickHint" class="pick-hint" hidden></span>
         <button class="small ghost" data-fit="side">Fit</button></div>
       <canvas id="cvSide"></canvas>
     </div>

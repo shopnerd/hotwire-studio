@@ -73,5 +73,33 @@ const m = r2.moves[5], p = r2.moves[4];
 const fast = Math.max(G.dist(m.L, p.L), G.dist(m.R, p.R)) / (m.t - p.t);
 ok(Math.abs(fast - st2.speed) < 1e-6, 'G93 feed: faster tower runs at set speed');
 
+// 5. Sync points
+const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+const wa = G.withAnchors(sq, [0.5]);
+ok(G.dist(wa.ring[wa.idx[0]], [10, 10]) < 1e-9, 'Sync point at 50% of a square lands on the opposite corner');
+ok(Math.abs(G.fractionOf(sq, [10, 5]).t - 0.375) < 1e-9, 'fractionOf: point on the outline -> 37.5%');
+const big = M.prepFace(G.naca4('2412', 80).pts, 300, 0, 0.25, 'te');
+const small = M.prepFace(G.naca4('0012', 80).pts, 200, 0, 0.25, 'te');
+const sp = G.syncPair(big, small, 1, 10, [0.2, 0.5, 0.8], [0.3, 0.5, 0.7]);
+ok(sp.user && sp.anchors.length === 3 && sp.a.length === sp.b.length, 'User sync: both faces get the same anchors and point count');
+const fa = sp.anchors.map(i => G.fractionOf(sp.a.slice(0, -1), sp.a[i]).t), fb = sp.anchors.map(i => G.fractionOf(sp.b.slice(0, -1), sp.b[i]).t);
+ok(fa.every((t, k) => Math.abs(t - [0.2, 0.5, 0.8][k]) < 0.01) && fb.every((t, k) => Math.abs(t - [0.3, 0.5, 0.7][k]) < 0.01), 'User sync: anchors sit where they were asked for (±1%)');
+// DXF markers: a square outline with one POINT and one tiny circle on it
+const dxf = ['0', 'SECTION', '2', 'ENTITIES',
+  '0', 'LWPOLYLINE', '90', '4', '70', '1', '10', '0', '20', '0', '10', '100', '20', '0', '10', '100', '20', '50', '10', '0', '20', '50',
+  '0', 'POINT', '10', '100', '20', '25',
+  '0', 'CIRCLE', '10', '50', '20', '50', '40', '0.5',
+  '0', 'ENDSEC', '0', 'EOF'].join('\n');
+const dp = D.readProfile(dxf, 'sq.dxf');
+ok(dp.syncPts.length === 2 && G.bbox(dp.pts).w === 100, 'DXF: POINT and tiny circle read as 2 sync points, outline kept');
+const st3 = JSON.parse(JSON.stringify(M.DEFAULTS));
+Object.assign(st3, { start: 'first' }); st3.left.chord = 100; st3.right.chord = 60;
+const src3 = { pts: dp.pts, syncPts: dp.syncPts, isAirfoil: false };
+const r3 = M.build(st3, src3, src3);
+ok(r3.syncMarks.length === 2 && r3.syncMarks.every(m => m.from === 'dxf'), 'DXF sync points used in the build');
+const st4 = JSON.parse(JSON.stringify(st3)); st4.sync = [{ l: 0.9, r: 0.1 }];
+const r4 = M.build(st4, src3, src3);
+ok(r4.warn.some(w => /cross/.test(w)) && r4.syncMarks.length === 2, 'Crossing sync pair is refused with a warning');
+
 console.log(fails ? `\n${fails} FAILED` : '\nAll passed');
 process.exit(fails ? 1 : 0);

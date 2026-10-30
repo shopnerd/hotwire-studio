@@ -38,6 +38,7 @@ button, input, select { font: inherit; color: inherit; }
 .bar-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 button, .btn, select { border: 1px solid var(--rule-2); background: #fff; padding: 5px 11px; border-radius: var(--radius); cursor: pointer; white-space: nowrap; }
 .btn { display: inline-flex; align-items: center; }
+a.btn { text-decoration: none; }
 button:hover, .btn:hover, select:hover { border-color: var(--ink-2); }
 button:active, .btn:active { transform: translateY(1px); }
 button:focus-visible, .btn:focus-within, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -64,6 +65,15 @@ button.primary:hover { background: #000; }
 .file-btn { justify-self: start; }
 .hint { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
 [data-hidden] { display: none !important; }
+.sync-btns { display: flex; gap: 6px; margin: 4px 0 6px; }
+.sync-list { margin: 4px 0 0; padding: 0; list-style: none; font-size: 12px; }
+.sync-list li { display: flex; align-items: center; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--rule); }
+.sync-list li b { width: 18px; height: 18px; border-radius: 50%; background: #b85a2c; color: #fff; font: 600 11px/18px var(--mono); text-align: center; flex: none; }
+.sync-list li span { font-family: var(--mono); color: var(--ink-2); flex: 1; }
+.sync-list li button { padding: 0 7px; font-size: 12px; }
+.sync-list li.dxf b { background: var(--ink-2); }
+.pick-hint { background: #b85a2c; color: #fff; padding: 2px 9px; border-radius: 10px; font-weight: 500; }
+canvas.picking { cursor: crosshair !important; }
 
 /* views */
 .views { display: grid; grid-template-rows: 1fr 1fr auto; min-width: 0; min-height: 0; }

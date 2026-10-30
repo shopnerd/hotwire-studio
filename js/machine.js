@@ -23,21 +23,53 @@ M.DEFAULTS = {
   speed: 200,             // mm/min along the faster tower
   spacing: 1,             // point spacing, mm (DevFoam sample: ~1)
   cornerDeg: 10,
+  sync: [],               // sync pairs added in the app: [{ l, r }] as fractions round each face from its start
+  syncFromDxf: true,      // use POINTs / tiny circles drawn on the DXF outlines as sync points
   block: { length: 0, height: 50.8, margin: 25.4 },
   machine: { span: 882.65, maxX: 0, maxY: 0 },
 };
 
 function fmt(v) { const s = (Math.abs(v) < 5e-5 ? 0 : v).toFixed(4); return s === '-0.0000' ? '0.0000' : s; }
 
-/* Shape -> face ring in profile space: chord scaled, rotated (+ = nose up), LE at origin. */
-M.prepFace = function (pts, chord, rotDeg, pivotFrac, start) {
+/* Shape -> face ring in profile space: chord scaled, rotated (+ = nose up), LE at origin.
+   `marks` (sync markers from the DXF) get the same transform and come back as fractions round the ring. */
+M.prepFace = function (pts, chord, rotDeg, pivotFrac, start, marks) {
   let ring = G.normalizeLoop(pts, start);
   const bb = G.bbox(ring);
   const sc = chord > 0 && bb.w > 0 ? chord / bb.w : 1;
   const le = ring[G.argMinX(ring)];
-  ring = ring.map(p => [(p[0] - le[0]) * sc, (p[1] - le[1]) * sc]);
-  if (rotDeg) ring = G.rotateAbout(ring, (pivotFrac || 0) * (bb.w * sc), 0, -rotDeg);
+  const tf = q => q.map(p => [(p[0] - le[0]) * sc, (p[1] - le[1]) * sc]);
+  ring = tf(ring);
+  let mk = marks && marks.length ? tf(marks) : [];
+  if (rotDeg) {
+    ring = G.rotateAbout(ring, (pivotFrac || 0) * (bb.w * sc), 0, -rotDeg);
+    mk = G.rotateAbout(mk, (pivotFrac || 0) * (bb.w * sc), 0, -rotDeg);
+  }
+  ring = G.normalizeLoop(ring, start === 'te' ? 'te' : 'first'); // re-pick TE after rotation
+  const fr = mk.map(p => G.fractionOf(ring, p));
+  ring.marks = fr.filter(f => f.dist <= Math.max(2, G.bbox(ring).w * 0.02)).map(f => f.t).sort((x, y) => x - y);
+  ring.marksOff = fr.length - ring.marks.length;
   return ring;
+};
+
+/* Pair up sync points: DXF markers (matched in order) + pairs clicked in the app.
+   Keeps only pairs that go round both faces in the same order. */
+M.syncPairs = function (st, fl, fr, warn) {
+  let pairs = [];
+  if (st.syncFromDxf !== false && (fl.marks.length || fr.marks.length)) {
+    if (fl.marks.length === fr.marks.length) pairs = fl.marks.map((t, i) => ({ l: t, r: fr.marks[i], from: 'dxf' }));
+    else warn.push(`The DXFs have different numbers of sync points (left ${fl.marks.length}, right ${fr.marks.length}); they were ignored.`);
+  }
+  if (fl.marksOff || fr.marksOff) warn.push('Some DXF sync points are not on the outline, so they were ignored. Draw them on the line.');
+  for (const p of st.sync || []) if (p && p.l > 0 && p.l < 1 && p.r > 0 && p.r < 1) pairs.push({ l: +p.l, r: +p.r, from: 'app' });
+  pairs.sort((a, b) => a.l - b.l);
+  const kept = [];
+  for (const p of pairs) {
+    const last = kept[kept.length - 1];
+    if (last && (p.r <= last.r || p.l - last.l < 1e-4)) { warn.push('Two sync pairs cross each other (they go round the faces in a different order), so one was ignored.'); continue; }
+    kept.push(p);
+  }
+  return kept;
 };
 
 M.refPoint = function (ring, ref) {
@@ -67,16 +99,18 @@ M.build = function (st, srcL, srcR) {
   if (sL < 0 || sR > W) warn.push(`Part (${width} mm wide) does not fit between the towers at this position (wire span ${W} mm).`);
 
   const startMode = st.start === 'auto' ? (srcL.isAirfoil ? 'te' : 'first') : st.start;
-  let fl = M.prepFace(srcL.pts, +st.left.chord, +st.left.rot, +st.pivot, startMode);
-  let fr = M.prepFace(srcR.pts, +st.right.chord, +st.right.rot, +st.pivot, startMode);
+  let fl = M.prepFace(srcL.pts, +st.left.chord, +st.left.rot, +st.pivot, startMode, srcL.syncPts);
+  let fr = M.prepFace(srcR.pts, +st.right.chord, +st.right.rot, +st.pivot, startMode, srcR.syncPts);
+  const pairs = M.syncPairs(st, fl, fr, warn);
 
   // Right face sits at left ref + (dx, dy)
   const rl = M.refPoint(fl, st.ref), rr = M.refPoint(fr, st.ref);
   fl = fl.map(p => [p[0] - rl[0], p[1] - rl[1]]);
   fr = fr.map(p => [p[0] - rr[0] + (+st.right.dx || 0), p[1] - rr[1] + (+st.right.dy || 0)]);
 
-  const sync = G.syncPair(fl, fr, +st.spacing, +st.cornerDeg);
-  if (!sync.cornersMatched) info.push(`Faces have different corner counts (${sync.cornerCounts.join(' vs ')}); synced on start + leading edge only.`);
+  const sync = G.syncPair(fl, fr, +st.spacing, +st.cornerDeg, pairs.map(p => p.l), pairs.map(p => p.r));
+  if (!sync.user && !sync.cornersMatched) info.push(`The two faces' corners don't line up (left ${sync.cornerCounts[0]}, right ${sync.cornerCounts[1]}), so they're matched at the start and leading edge only. Add sync points to control the match.`);
+  if (sync.user) info.push(`${pairs.length} sync point pair${pairs.length > 1 ? 's' : ''} in use (${pairs.filter(p => p.from === 'dxf').length} from the DXFs, ${pairs.filter(p => p.from === 'app').length} added here).`);
   const cut = G.offsetPair(sync.a, sync.b, +st.kerfL || 0, +st.kerfR || 0);
 
   // Into machine X/Y: optional front/back flip, then shift so the part's front-lowest point is at (frontX, bottomY).
@@ -124,7 +158,8 @@ M.build = function (st, srcL, srcR) {
   if (start[1] < ext.maxY && (start[0] > ext.minX && start[0] < ext.maxX)) warn.push('Start point is inside the part outline area; the rapid move may hit foam.');
 
   const prog = M.program(towers, +st.speed);
-  return { st, sL, sR, W, part, path, start, faceL, faceR, towers, block, warn, info, sync, ...prog };
+  const syncMarks = sync.anchors.map((i, k) => ({ L: part.L[i], R: part.R[i], user: !!sync.user, from: sync.user ? (pairs[k] || {}).from : 'auto' }));
+  return { st, sL, sR, W, part, path, start, faceL, faceR, towers, block, warn, info, sync, syncMarks, ...prog };
 };
 
 /* DevFoam-style program: G93 inverse-time feed, timed so the faster tower moves at `speed` mm/min. */

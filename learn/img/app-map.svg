@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" width="760" height="420" font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif">
+  <rect width="760" height="420" fill="#fbf9f4"/>
+  <!-- window -->
+  <rect x="10" y="10" width="740" height="400" fill="#fff" stroke="#2a2823" stroke-width="1.5"/>
+  <rect x="10" y="10" width="740" height="32" fill="#f3f1ec" stroke="#2a2823" stroke-width="1.5"/>
+  <text x="22" y="31" font-size="12" font-weight="600" fill="#2a2823">Hotwire Studio</text>
+  <text x="130" y="31" font-size="11" fill="#5c574d">cut name</text>
+  <g font-size="10.5" fill="#2a2823">
+    <rect x="404" y="17" width="78" height="18" fill="#fff" stroke="#9a948a"/><text x="412" y="30">Examples…</text>
+    <rect x="488" y="17" width="72" height="18" fill="#fff" stroke="#9a948a"/><text x="495" y="30">Preview .nc</text>
+    <rect x="566" y="17" width="36" height="18" fill="#fff" stroke="#9a948a"/><text x="571" y="30">Save</text>
+    <rect x="608" y="17" width="36" height="18" fill="#fff" stroke="#9a948a"/><text x="613" y="30">Open</text>
+    <rect x="650" y="17" width="92" height="18" fill="#2a2823"/><text x="657" y="30" fill="#fff">Download G-code</text>
+  </g>
+  <!-- settings -->
+  <rect x="10" y="42" width="160" height="368" fill="#faf8f3" stroke="#2a2823"/>
+  <g font-size="10.5" fill="#2a2823">
+    <text x="20" y="62" font-weight="600">LEFT FACE</text>
+    <rect x="20" y="70" width="140" height="11" fill="#ece8df"/><rect x="20" y="86" width="140" height="11" fill="#ece8df"/><rect x="20" y="102" width="140" height="11" fill="#ece8df"/>
+    <text x="20" y="132" font-weight="600">RIGHT FACE</text>
+    <rect x="20" y="140" width="140" height="11" fill="#ece8df"/><rect x="20" y="156" width="140" height="11" fill="#ece8df"/><rect x="20" y="172" width="140" height="11" fill="#ece8df"/>
+    <text x="20" y="202" font-weight="600">PLACEMENT</text>
+    <rect x="20" y="210" width="140" height="11" fill="#ece8df"/><rect x="20" y="226" width="140" height="11" fill="#ece8df"/>
+    <text x="20" y="256" font-weight="600">CUT</text>
+    <rect x="20" y="264" width="140" height="11" fill="#ece8df"/><rect x="20" y="280" width="140" height="11" fill="#ece8df"/><rect x="20" y="296" width="140" height="11" fill="#ece8df"/>
+    <text x="20" y="326" font-weight="600">FOAM BLOCK</text>
+    <text x="20" y="356" font-weight="600">MACHINE</text>
+  </g>
+  <!-- side view -->
+  <rect x="170" y="42" width="380" height="160" fill="#fff" stroke="#2a2823"/>
+  <rect x="215" y="100" width="300" height="70" fill="#f3e6c8" stroke="#c9b48a"/>
+  <path d="M235 140 C 280 112, 400 112, 495 138 C 400 146, 290 152, 235 140 Z" fill="#e6e3dc" stroke="#8d8c86"/>
+  <path d="M232 140 C 278 108, 402 108, 499 138 C 402 150, 288 156, 232 140 Z" fill="none" stroke="#1f6fb2" stroke-width="1.6"/>
+  <path d="M250 136 C 290 116, 390 116, 470 136 C 390 142, 300 146, 250 136 Z" fill="none" stroke="#d9480f" stroke-width="1.6"/>
+  <line x1="170" y1="178" x2="550" y2="178" stroke="#2a2823" stroke-width="1.5"/>
+  <!-- 3D view -->
+  <rect x="170" y="202" width="380" height="172" fill="#fff" stroke="#2a2823"/>
+  <path d="M220 330 L 390 360 L 520 300 L 350 275 Z" fill="none" stroke="#c9b48a"/>
+  <path d="M260 300 L 430 325 L 490 285 L 320 262 Z" fill="#eeeae2" stroke="#8d8c86"/>
+  <line x1="215" y1="220" x2="215" y2="345" stroke="#2a2823" stroke-width="3"/><line x1="525" y1="215" x2="525" y2="315" stroke="#2a2823" stroke-width="3"/>
+  <line x1="215" y1="290" x2="525" y2="262" stroke="#c92a2a" stroke-width="1.8"/>
+  <!-- play bar -->
+  <rect x="170" y="374" width="380" height="36" fill="#faf8f3" stroke="#2a2823"/>
+  <rect x="180" y="383" width="34" height="18" fill="#fff" stroke="#9a948a"/><text x="186" y="396" font-size="10.5" fill="#2a2823">Play</text>
+  <line x1="225" y1="392" x2="540" y2="392" stroke="#cfc9bd" stroke-width="3"/><line x1="225" y1="392" x2="330" y2="392" stroke="#c92a2a" stroke-width="3"/><circle cx="330" cy="392" r="5" fill="#c92a2a"/>
+  <!-- right panel -->
+  <rect x="550" y="42" width="200" height="368" fill="#faf8f3" stroke="#2a2823"/>
+  <g font-size="10.5" fill="#5c574d"><text x="560" y="62">Cut time</text><text x="560" y="78">Tower X / A range</text><text x="560" y="94">Tower Y / Z range</text></g>
+  <rect x="558" y="104" width="184" height="22" fill="#fdf0dc" stroke="#efd4a6"/><text x="565" y="119" font-size="10.5" fill="#9a5200">warnings show here</text>
+  <rect x="550" y="134" width="200" height="276" fill="#fff" stroke="#2a2823"/>
+  <g fill="#d9d4ca"><rect x="565" y="146" width="40" height="7"/><rect x="565" y="160" width="40" height="7"/><rect x="565" y="174" width="30" height="7"/><rect x="565" y="188" width="150" height="7"/><rect x="565" y="202" width="160" height="7"/><rect x="565" y="216" width="160" height="7"/><rect x="565" y="230" width="160" height="7"/><rect x="565" y="244" width="160" height="7"/><rect x="565" y="258" width="160" height="7"/><rect x="565" y="272" width="160" height="7"/><rect x="565" y="286" width="160" height="7"/><rect x="565" y="300" width="160" height="7"/><rect x="565" y="314" width="160" height="7"/><rect x="565" y="328" width="160" height="7"/></g>
+  <rect x="552" y="240" width="196" height="14" fill="#c92a2a" opacity=".12"/>
+  <!-- callouts -->
+  <g font-size="13" font-weight="700" fill="#fff" text-anchor="middle">
+    <circle cx="150" cy="62" r="11" fill="#b85a2c"/><text x="150" y="67">1</text>
+    <circle cx="530" cy="62" r="11" fill="#b85a2c"/><text x="530" y="67">2</text>
+    <circle cx="530" cy="222" r="11" fill="#b85a2c"/><text x="530" y="227">3</text>
+    <circle cx="160" cy="392" r="11" fill="#b85a2c"/><text x="160" y="397">4</text>
+    <circle cx="732" cy="72" r="11" fill="#b85a2c"/><text x="732" y="77">5</text>
+    <circle cx="732" cy="160" r="11" fill="#b85a2c"/><text x="732" y="165">6</text>
+  </g>
+</svg>

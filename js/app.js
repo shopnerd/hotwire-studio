@@ -72,7 +72,7 @@ for (const inp of $$('input[data-file]')) {
       let src;
       if (/\.dxf$/i.test(f.name)) {
         const p = D.readProfile(text, f.name);
-        src = { name: f.name, pts: p.pts, isAirfoil: false, notes: p.notes };
+        src = { name: f.name, pts: p.pts, syncPts: p.syncPts, isAirfoil: false, notes: p.notes };
         st[face].chord = +G.bbox(p.pts).w.toFixed(4); // DXF is already full size
       } else {
         const p = G.parseDat(text, f.name);
@@ -122,9 +122,10 @@ function setProgram(refit) {
     const r = result;
     prog = { kind: 'generated', moves: r.moves, lines: r.gcode.trimEnd().split('\n'), minutes: r.minutes };
     scene = { W: r.W, sL: r.sL, sR: r.sR, towersL: r.towers.L, towersR: r.towers.R, faceL: r.faceL, faceR: r.faceR,
-      partL: r.part.L, partR: r.part.R, block: r.block };
+      partL: r.part.L, partR: r.part.R, block: r.block, syncMarks: r.syncMarks, pickPending: pick && pick.pt };
   } else { prog = null; scene = null; }
   simT = Math.min(simT, prog ? prog.minutes : 0);
+  renderSync();
   renderOut();
   renderCode();
   updateSim(refit);
@@ -242,6 +243,55 @@ function tick(now) {
   requestAnimationFrame(tick);
 }
 
+/* ── sync points ───────────────────────────────────────── */
+let pick = null; // null | { stage: 'l' | 'r', l: fraction, pt: [x, y] }
+function setPick(p) {
+  pick = p;
+  const hint = $('#pickHint'), cv = $('#cvSide');
+  if (!pick) { hint.hidden = true; cv.classList.remove('picking'); }
+  else {
+    hint.hidden = false; cv.classList.add('picking');
+    hint.textContent = pick.stage === 'l' ? 'Click the LEFT face (blue outline) · Esc cancels' : 'Now click the matching spot on the RIGHT face (orange)';
+  }
+  if (scene) { scene.pickPending = pick && pick.pt; side.draw(); }
+}
+side.onPick = (pt, scale) => {
+  if (!pick || !scene || !scene.partL || showing === 'loaded') return;
+  const poly = (pick.stage === 'l' ? scene.partL : scene.partR).slice(0, -1);
+  const f = G.fractionOf(poly, pt);
+  if (f.dist * scale > 30) { flash(`Click closer to the ${pick.stage === 'l' ? 'blue (left)' : 'orange (right)'} outline.`); return; }
+  if (pick.stage === 'l') { setPick({ stage: 'r', l: f.t, pt }); return; }
+  st.sync = (st.sync || []).concat([{ l: +pick.l.toFixed(5), r: +f.t.toFixed(5) }]);
+  setPick(null); rebuild(false);
+};
+$('#btnSyncAdd').addEventListener('click', () => {
+  if (!result) { flash(buildErr || 'Set up both faces first.'); return; }
+  if (showing === 'loaded') { showing = 'generated'; setProgram(true); }
+  setPick({ stage: 'l' });
+});
+$('#btnSyncClear').addEventListener('click', () => { st.sync = []; setPick(null); rebuild(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && pick) setPick(null); });
+function renderSync() {
+  const ol = $('#syncList'); ol.innerHTML = '';
+  const marks = result ? result.syncMarks.filter(m => m.user) : [];
+  let k = 0;
+  for (const m of marks) {
+    k++;
+    const li = document.createElement('li'); if (m.from === 'dxf') li.className = 'dxf';
+    const b = document.createElement('b'); b.textContent = k;
+    const s = document.createElement('span'); s.textContent = m.from === 'dxf' ? 'from the DXFs' : 'added here';
+    li.append(b, s);
+    if (m.from === 'app') {
+      const appPairs = (st.sync || []).slice().sort((x, y) => x.l - y.l);
+      const idx = marks.filter(x => x.from === 'app').indexOf(m), pair = appPairs[idx];
+      const del = document.createElement('button'); del.className = 'small ghost'; del.textContent = '×'; del.title = 'Remove this pair';
+      del.onclick = () => { st.sync = (st.sync || []).filter(p => p !== pair); rebuild(false); };
+      li.append(del);
+    }
+    ol.append(li);
+  }
+}
+
 /* ── top bar ───────────────────────────────────────────── */
 function download(name, text, type) {
   const a = document.createElement('a');
@@ -293,5 +343,6 @@ function flash(t) { const box = $('#msgs'); const d = document.createElement('di
 function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* ignore */ } }
 
 new ResizeObserver(() => { side.draw(); v3d.draw(); }).observe($('.views'));
+window.HWApp = { side, get scene() { return scene; }, get state() { return st; } }; // for debugging in the console
 fillForm(); rebuild(true);
 })();

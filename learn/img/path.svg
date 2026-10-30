@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" width="760" height="300" font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#b85a2c"/></marker>
+    <marker id="ak" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2a2823"/></marker>
+  </defs>
+  <rect width="760" height="300" fill="#fbf9f4"/>
+  <text x="20" y="26" font-size="13" font-weight="600" fill="#2a2823" letter-spacing="1">SIDE VIEW · one program, start to finish</text>
+  <rect x="100" y="256" width="620" height="12" fill="#e9e4d8" stroke="#2a2823"/>
+  <rect x="120" y="128" width="540" height="128" fill="#f3e6c8" stroke="#2a2823"/>
+  <text x="650" y="246" font-size="11" fill="#5c574d" text-anchor="end">foam block</text>
+  <!-- part + wire path -->
+  <path d="M200 196 C 250 150, 470 150, 610 200 C 470 212, 280 226, 200 196 Z" fill="#e6e3dc" stroke="#8d8c86"/>
+  <path d="M195 196 C 247 144, 472 144, 616 200 C 472 216, 278 232, 195 196 Z" fill="none" stroke="#b85a2c" stroke-width="2"/>
+  <path d="M380 155 L 392 155.5" stroke="#b85a2c" stroke-width="2" marker-end="url(#ah)"/>
+  <path d="M420 221 L 408 221.6" stroke="#b85a2c" stroke-width="2" marker-end="url(#ah)"/>
+  <!-- zero, rapid, start, lead in -->
+  <circle cx="120" cy="256" r="6" fill="none" stroke="#2a2823" stroke-width="1.6"/>
+  <text x="104" y="250" font-size="12" font-weight="600" fill="#2a2823" text-anchor="end">0</text>
+  <line x1="122" y1="250" x2="214" y2="72" stroke="#2a2823" stroke-dasharray="3 4" marker-end="url(#ak)"/>
+  <circle cx="218" cy="66" r="6" fill="#2a2823"/>
+  <text x="230" y="62" font-size="12" font-weight="600" fill="#2a2823">start point</text>
+  <text x="230" y="77" font-size="11" fill="#5c574d">in the air</text>
+  <line x1="216" y1="72" x2="203" y2="182" stroke="#b85a2c" stroke-width="2" marker-end="url(#ah)"/>
+  <g font-size="11.5" fill="#2a2823">
+    <text x="440" y="60" font-weight="600">1  G0 rapid to the start point</text>
+    <text x="440" y="78" font-weight="600">2  G1 straight lead-in</text>
+    <text x="440" y="96" font-weight="600">3  once around the outline</text>
+    <text x="440" y="114" font-weight="600">4  back out to the start, M5</text>
+  </g>
+  <text x="150" y="168" font-size="11" fill="#b85a2c">lead-in</text>
+</svg>

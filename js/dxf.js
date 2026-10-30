@@ -79,7 +79,7 @@ D.parse = function (text) {
   let i = 0;
   while (i < P.length && !(P[i][0] === 2 && P[i][1] === 'ENTITIES')) i++;
   if (i >= P.length) throw new Error('DXF has no ENTITIES section');
-  const polys = [];
+  const polys = [], circles = [], points = [];
   const skipped = {};
   let cur = null, poly = null;
 
@@ -91,7 +91,8 @@ D.parse = function (text) {
     switch (e.type) {
       case 'LINE': polys.push([[g1(10), g1(20)], [g1(11), g1(21)]]); break;
       case 'ARC': polys.push(arcPts(g1(10), g1(20), g1(40), g1(50), g1(51))); break;
-      case 'CIRCLE': polys.push(arcPts(g1(10), g1(20), g1(40), 0, 360)); break;
+      case 'CIRCLE': circles.push({ c: [g1(10), g1(20)], r: g1(40) }); break;
+      case 'POINT': points.push([g1(10), g1(20)]); break;
       case 'LWPOLYLINE': {
         const verts = []; let v = null;
         for (const [c, s] of e.codes) {
@@ -139,8 +140,8 @@ D.parse = function (text) {
   flush();
   if (cur && cur.type === 'POLYHEAD') cur = null;
   delete skipped.POLYHEAD; delete skipped.VERTEX;
-  if (!polys.length) throw new Error('No lines, arcs, polylines or splines found in the DXF');
-  return { polys, skipped };
+  if (!polys.length && !circles.length) throw new Error('No lines, arcs, polylines or splines found in the DXF');
+  return { polys, circles, points, skipped };
 };
 
 // Chain open pieces into loops by matching endpoints.
@@ -167,11 +168,18 @@ D.chain = function (polys, tol) {
 };
 
 D.readProfile = function (text, name) {
-  const { polys, skipped } = D.parse(text);
-  let all = polys.flat();
+  const parsed = D.parse(text), skipped = parsed.skipped, polys = parsed.polys;
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const p of all) { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]); }
-  const tol = Math.max(0.01, Math.max(maxX - minX, maxY - minY) * 1e-5);
+  const grow = p => { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]); };
+  polys.flat().forEach(grow);
+  parsed.circles.forEach(c => { grow([c.c[0] - c.r, c.c[1] - c.r]); grow([c.c[0] + c.r, c.c[1] + c.r]); });
+  const size = Math.max(maxX - minX, maxY - minY);
+  // Sync markers: POINT entities, and tiny circles (radius ≤ 2 mm or 1 % of the part) drawn on the outline.
+  const markR = Math.max(2, size * 0.01);
+  const syncPts = parsed.points.slice();
+  for (const c of parsed.circles) { if (c.r <= markR) syncPts.push(c.c); else polys.push(arcPts(c.c[0], c.c[1], c.r, 0, 360)); }
+  if (!polys.length) throw new Error('The DXF only has sync markers, no outline');
+  const tol = Math.max(0.01, size * 1e-5);
   const { loops, open } = D.chain(polys, tol);
   const notes = [];
   const area = (r) => { let a = 0; for (let i = 0; i < r.length - 1; i++) a += r[i][0] * r[i + 1][1] - r[i + 1][0] * r[i][1]; return Math.abs(a / 2); };
@@ -188,7 +196,8 @@ D.readProfile = function (text, name) {
   if (open.length && loops.length) notes.push(`${open.length} loose piece(s) ignored.`);
   const sk = Object.keys(skipped).filter(k => !['TEXT', 'MTEXT', 'DIMENSION', 'POINT', 'INSERT', 'HATCH'].includes(k) || true);
   if (sk.length) notes.push('Ignored entity types: ' + sk.map(k => `${k}×${skipped[k]}`).join(', '));
-  return { name: name || 'DXF', pts: pick, notes };
+  if (syncPts.length) notes.push(`${syncPts.length} sync point${syncPts.length > 1 ? 's' : ''} found in the DXF.`);
+  return { name: name || 'DXF', pts: pick, syncPts, notes };
 };
 
 if (typeof module !== 'undefined') module.exports = D; else root.HWDxf = D;

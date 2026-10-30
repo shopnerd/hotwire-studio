@@ -153,8 +153,16 @@ function segment(ring, i, j) { // i..j inclusive, j may equal ring.length (= wra
    Sync points: the start point, LE (min x), plus corners (turn > cornerDeg) when both faces
    have the same count on each side. Points are spaced about `spacing` mm along the longer face.
    Returns closed polylines (first point repeated at the end) of equal length. */
-G.syncPair = function (ra, rb, spacing, cornerDeg) {
+G.syncPair = function (ra, rb, spacing, cornerDeg, userA, userB) {
   spacing = spacing > 0 ? spacing : 1;
+  if (userA && userA.length && userB && userB.length === userA.length) {
+    // User sync points (fractions of the way round each face, in order): they replace the automatic ones.
+    const A = G.withAnchors(ra, userA), B = G.withAnchors(rb, userB);
+    const la = [0], lb = [0];
+    A.idx.forEach((ia, k) => { const ib = B.idx[k]; if (ia > la[la.length - 1] && ib > lb[lb.length - 1]) { la.push(ia); lb.push(ib); } });
+    la.push(A.ring.length); lb.push(B.ring.length);
+    return G.resamplePair(A.ring, B.ring, la, lb, spacing, { user: true });
+  }
   const anchorsFor = (ring) => {
     let le = 1; // leftmost point other than the start
     for (let i = 2; i < ring.length; i++) if (ring[i][0] < ring[le][0]) le = i;
@@ -165,20 +173,62 @@ G.syncPair = function (ra, rb, spacing, cornerDeg) {
   const useUp = A.up.length === B.up.length, useLo = A.lo.length === B.lo.length;
   const list = (X, ring) => [0].concat(useUp ? X.up : [], [X.le], useLo ? X.lo : [], [ring.length]);
   const la = list(A, ra), lb = list(B, rb);
-  const segA = [], segB = [];
+  return G.resamplePair(ra, rb, la, lb, spacing,
+    { cornersMatched: useUp && useLo, cornerCounts: [A.up.length + A.lo.length, B.up.length + B.lo.length] });
+};
+
+/* Resample two rings between matching anchor indices (both lists start at 0 and end at ring.length).
+   Returns closed polylines plus `anchors`: where each inner anchor landed in the output. */
+G.resamplePair = function (ra, rb, la, lb, spacing, extra) {
+  const a = [], b = [], anchors = [];
   for (let k = 0; k < la.length - 1; k++) {
-    segA.push(segment(ra, la[k], la[k + 1]));
-    segB.push(segment(rb, lb[k], lb[k + 1]));
-  }
-  const lenA = segA.map(G.length), lenB = segB.map(G.length);
-  const a = [], b = [];
-  for (let k = 0; k < segA.length; k++) {
-    const c = Math.max(1, Math.ceil(Math.max(lenA[k], lenB[k]) / spacing - 1e-9));
-    a.push(...G.resample(segA[k], c));
-    b.push(...G.resample(segB[k], c));
+    const sa = segment(ra, la[k], la[k + 1]), sb = segment(rb, lb[k], lb[k + 1]);
+    if (k > 0) anchors.push(a.length);
+    const c = Math.max(1, Math.ceil(Math.max(G.length(sa), G.length(sb)) / spacing - 1e-9));
+    a.push(...G.resample(sa, c));
+    b.push(...G.resample(sb, c));
   }
   a.push(a[0].slice()); b.push(b[0].slice());
-  return { a, b, cornersMatched: useUp && useLo, cornerCounts: [A.up.length + A.lo.length, B.up.length + B.lo.length] };
+  return Object.assign({ a, b, anchors, cornersMatched: true, cornerCounts: [0, 0] }, extra || {});
+};
+
+/* Fraction (0..1) of the way round a closed ring, from its start, of the point on it nearest p. */
+G.fractionOf = function (ring, p) {
+  const n = ring.length;
+  let best = Infinity, bestS = 0, run = 0;
+  for (let i = 0; i < n; i++) {
+    const a = ring[i], b = ring[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy, L = Math.sqrt(L2);
+    const t = L2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2)) : 0;
+    const d = Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+    if (d < best) { best = d; bestS = run + t * L; }
+    run += L;
+  }
+  return { t: run ? bestS / run : 0, dist: best };
+};
+
+/* Insert points at fractions ts (ascending) round a closed ring; returns the new ring and each point's index. */
+G.withAnchors = function (ring, ts) {
+  const n = ring.length, cum = [0];
+  for (let i = 0; i < n; i++) cum.push(cum[i] + G.dist(ring[i], ring[(i + 1) % n]));
+  const L = cum[n];
+  const hits = ts.map((t, q) => {
+    const s = Math.min(0.9995, Math.max(0.0005, t)) * L;
+    let k = 0; while (k < n - 1 && cum[k + 1] < s) k++;
+    const seg = cum[k + 1] - cum[k];
+    return { q, k, f: seg ? (s - cum[k]) / seg : 0 };
+  });
+  const out = [], idx = new Array(ts.length);
+  for (let k = 0; k < n; k++) {
+    out.push(ring[k]);
+    const here = hits.filter(h => h.k === k).sort((x, y) => x.f - y.f);
+    for (const h of here) {
+      if (h.f < 1e-6 && k > 0) { idx[h.q] = out.length - 1; continue; }        // on an existing vertex
+      const a = ring[k], b = ring[(k + 1) % n], f = Math.max(h.f, 1e-6);
+      out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+      idx[h.q] = out.length - 1;
+    }
+  }
+  return { ring: out, idx };
 };
 
 /* Kerf compensation for a synced pair of closed CCW polylines (first == last).

@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hot-Wire Training Guide</title>
+<meta name="description" content="Training guide for the shop's 4-axis CNC hot-wire foam cutter: safety, the machine, making G-code in Hotwire Studio, preparing foam, running a cut, and sign-off.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22%3E%3Crect x=%224%22 y=%226%22 width=%224%22 height=%2230%22 fill=%22%231f2328%22/%3E%3Crect x=%2232%22 y=%226%22 width=%224%22 height=%2230%22 fill=%22%231f2328%22/%3E%3Cpath d=%22M6 14 L34 18%22 stroke=%22%23d9480f%22 stroke-width=%222.5%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="./"><svg viewBox="0 0 40 16" aria-hidden="true"><rect x="1" y="1" width="3" height="14"/><rect x="36" y="1" width="3" height="14"/><path d="M3 5 L37 7" class="wire"/></svg>Hotwire Studio <small>Training</small></a>
+  <nav aria-label="Sections"><a href="#safety">Safety</a><a href="#machine">Machine</a><a href="#gcode">Make G-code</a><a href="#foam">Foam</a><a href="#run">Run a cut</a><a href="#trouble">Troubleshooting</a><a href="#signoff">Sign-off</a></nav>
+  <a class="app" href="../">Open the app →</a>
+</header>
+
+<main>
+  <div class="kicker">Training · CNC hot-wire foam cutter</div>
+  <h1>Hot-wire cutting, start to finish</h1>
+  <p class="lede">The shop's hot-wire cutter pulls a heated wire through foam between two towers. Each tower moves on its own, so the wire can cut the same shape straight through a block, or a different shape on each face for tapered parts like wings. This guide takes you from a CAD face to a finished part, using Hotwire Studio to make the G-code.</p>
+
+  <div class="status"><b>DRAFT</b><span>Hotwire Studio's G-code matched a real DevFoam Pro 3 job in testing, but it hasn't cut foam on this machine yet. Run your first cuts with shop staff. Steps marked <em>confirm</em> are open questions for the shop.</span></div>
+
+  <ol class="toc">
+    <li><a href="#safety">1. Safety rules</a></li>
+    <li><a href="#machine">2. The machine</a></li>
+    <li><a href="#workflow">3. The workflow</a></li>
+    <li><a href="#dxf">4. Export the face from OnShape</a></li>
+    <li><a href="#gcode">5. Make the G-code</a></li>
+    <li><a href="#check">6. Check it before you cut</a></li>
+    <li><a href="#foam">7. Prepare the foam</a></li>
+    <li><a href="#run">8. Run the cut</a></li>
+    <li><a href="#after">9. After the cut</a></li>
+    <li><a href="#trouble">10. Troubleshooting</a></li>
+    <li><a href="#quiz">11. Check yourself</a></li>
+    <li><a href="#card">12. Quick reference card</a></li>
+    <li><a href="#signoff">13. Competency sign-off</a></li>
+  </ol>
+
+  <!-- 1 -->
+  <h2 id="safety">1. Safety rules</h2>
+  <p>A hot wire is quiet and slow, which makes it easy to forget that it's live, hot and putting out fumes. These rules aren't optional.</p>
+  <div class="findings">
+    <div class="finding"><b>Cut outdoors only</b><p>Melting foam gives off fumes. The machine rolls outside for every cut and back inside after.</p></div>
+    <div class="finding"><b>Never leave it running</b><p>Someone watches the wire the whole time a program runs. Know where the e-stop is before you press Start.</p></div>
+    <div class="finding"><b>Wire cold when you touch it</b><p>Turn the power supply off before you load foam, change the wire or reach between the towers. The wire stays hot for a few seconds after.</p></div>
+    <div class="finding"><b>Dry run first</b><p>Run every new program once with no foam and the wire cold, and watch that it stays inside the machine and clears the table.</p></div>
+    <div class="finding"><b>Wire off on exit</b><p>Turn the heat down when the wire leaves a cutout or re-traces a line. Turn it off as soon as the cut ends.</p></div>
+    <div class="finding"><b>Keep the rails clear</b><p>Nothing on the rails or drag chains, and no hands near the carriages while the program runs.</p></div>
+  </div>
+
+  <!-- 2 -->
+  <h2 id="machine">2. The machine</h2>
+  <p>Two towers stand on either side of the vacuum table. Each tower has a <b>horizontal</b> axis (front to back) and a <b>vertical</b> axis (up and down), and the wire is clipped between the tower tops.</p>
+  <figure class="fig"><img src="img/machine.svg" alt="Front and side views of the hot-wire cutter. Left tower axes X and Y, right tower axes A and Z, wire span 882.65 mm, zero at the front edge of the table at table height." width="760" height="380">
+    <figcaption><b>Figure 1.</b> Left tower = <b>X</b> (front to back) and <b>Y</b> (up). Right tower = <b>A</b> and <b>Z</b>. The wire between the clips is 882.65 mm long. Zero is the wire at the front edge of the table, at table height.</figcaption></figure>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Part</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Towers</td><td>Lead-screw horizontal axis on a plywood base, aluminum-extrusion vertical axis. Microswitches home each axis.</td></tr>
+      <tr><td>Controller</td><td>Arduino Mega + RAMPS board with plug-in stepper drivers (5 slots, so a 5th axis is possible). Connects to the laptop by USB.</td></tr>
+      <tr><td>GRBL Hotwire (laptop)</td><td>Connects on a COM port, homes, jogs, zeroes and sends the G-code. Its preview is unreliable, so preview in Hotwire Studio instead.</td></tr>
+      <tr><td>Bench power supply</td><td>Heats the wire. Current is set by hand with the knobs and isn't controlled by the G-code.</td></tr>
+      <tr><td>Vacuum table</td><td>Holds the block down. The vacuum runs on its own stool and switch.</td></tr>
+      <tr><td>Wire</td><td>0.4 mm, held by alligator clips at the tower tops. Tension it before every session.</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- 3 -->
+  <h2 id="workflow">3. The workflow</h2>
+  <figure class="fig"><img src="img/workflow.svg" alt="Workflow: OnShape face, exported as DXF, into Hotwire Studio, which writes a .nc file, sent by GRBL Hotwire to the cutter." width="760" height="150">
+    <figcaption><b>Figure 2.</b> Hotwire Studio replaces DevFoam Pro 3. Everything on the machine side stays the same.</figcaption></figure>
+  <p>Hotwire Studio runs in any browser, with nothing to install: <a href="../">shopnerd.github.io/hotwire-studio</a>. It remembers your last setup in that browser. Use <b>Save</b> to keep a setup file with your project.</p>
+
+  <!-- 4 -->
+  <h2 id="dxf">4. Export the face from OnShape</h2>
+  <ol class="steps">
+    <li><div>Hide every other part so only the one you're cutting shows.</div></li>
+    <li><div>Select the face you want the wire to follow, press <b>N</b> to look straight at it, then export it as a drawing: <b>DXF, R11/12, millimeters</b>.</div></li>
+    <li><div>Orient it so the <b>leading edge is on the left</b>. Hotwire Studio puts the drawing's left side at the front of the machine.</div></li>
+    <li><div>One face per file. For a tapered part, export both end faces, one file each. If the file has extra outlines, the app uses the largest one and tells you.</div></li>
+  </ol>
+  <p>For airfoils you don't need CAD at all. Type a NACA 4-digit code, or load a coordinate file (<code>.dat</code>, Selig or Lednicer format) from an airfoil database.</p>
+
+  <!-- 5 -->
+  <h2 id="gcode">5. Make the G-code</h2>
+  <figure class="fig"><img src="img/app-map.svg" alt="Layout of Hotwire Studio: settings on the left, side view and 3D view in the middle with a play bar, numbers and G-code on the right with the Download button at top right." width="760" height="420">
+    <figcaption><b>Figure 3.</b> ① Settings ② Side view, looking along the wire ③ 3D view ④ Play bar ⑤ Cut time, tower ranges and warnings ⑥ The G-code, with <b>Download G-code</b> at the top.</figcaption></figure>
+
+  <h3>A straight cut (same shape on both faces)</h3>
+  <ol class="steps">
+    <li><div><b>Left face → Shape → From file</b>, then <b>Load…</b> your DXF. <i>Chord / length</i> fills in with the drawing's real size. Leave it alone unless you want to scale the part.</div></li>
+    <li><div><b>Right face → Shape → Same as left.</b></div></li>
+    <li><div><b>Placement:</b> set <i>Part width</i> (the distance between the two faces). Leave <i>Centered between towers</i> on and center the block on the table to match. Then set <i>Part front X</i> and <i>Part bottom Y</i> (see <a href="#where">where the part sits</a>).</div></li>
+    <li><div><b>Cut:</b> check <i>Kerf</i> and <i>Speed</i>. The shop's last DevFoam job used <b>1.5 mm per side</b> and <b>200 mm/min</b>.</div></li>
+    <li><div>Read the warnings on the right, press <b>Play</b> to watch the cut, then <b>Download G-code</b>. The file is named after the cut name at top left.</div></li>
+  </ol>
+
+  <h3>A tapered cut (wings, winglets, anything that changes)</h3>
+  <p>Give each face its own shape and size, then tell the app where the right face sits relative to the left. The app does the rest: it lines up matching points on the two faces, offsets each one for kerf, and works out how far each tower has to move.</p>
+  <ol class="steps">
+    <li><div>Load the root profile on the <b>Left face</b> and the tip on the <b>Right face</b> (<i>From file</i>, or <i>Same as left</i> if only the size changes). Set each <i>Chord / length</i>.</div></li>
+    <li><div>Use <i>Rotation</i> for washout or twist. Positive is nose up, and it pivots at 25% of the chord.</div></li>
+    <li><div>Type the offset between the faces in <i>Offset dX</i> (sweep, toward the trailing edge) and <i>Offset dY</i> (up). <i>Measured at</i> says which point the offset is measured between: the outline's lower-left corner, the leading edge or the trailing edge. This is the number you used to measure in CAD and retype into DevFoam. Now you type it once.</div></li>
+    <li><div>Turn the <b>3D</b> view and check the part looks like the part. The grey lines show which point on the left face cuts with which on the right.</div></li>
+  </ol>
+
+  <h3 id="sync">Sync points: telling the app which spots cut together</h3>
+  <p>On a taper the app has to decide which point on the left face cuts at the same moment as which point on the right. By itself it matches the start, the leading edge, and corners when both faces have the same ones. That's right for the same shape at two sizes. When the two faces are <b>different shapes</b> (a different airfoil at the tip, a flap cut-out on one face only), add sync points so features line up instead of drifting. A twisted or wavy surface usually means the sync is wrong.</p>
+  <ul>
+    <li><b>In the app:</b> under <b>Sync points</b>, press <b>Add pair</b>. Click the spot on the blue (left) outline in the side view, then the matching spot on the orange (right) outline. The pair shows as a numbered orange line. Remove a pair with ×.</li>
+    <li><b>In CAD:</b> draw a <b>point</b>, or a tiny circle (2 mm radius or less), right on the outline in each face's sketch. Both DXFs need the same number of them, in the same order around the shape. The app pairs them in order and lists them as "from the DXFs".</li>
+    <li>Pairs must go round both faces in the same order. A pair that crosses another is ignored and the app says so.</li>
+  </ul>
+  <figure class="fig"><img src="img/taper.svg" alt="Top view of a tapered cut. The wire passes through matching points on the root and tip faces and continues to the towers, so the towers move farther than the faces." width="760" height="330">
+    <figcaption><b>Figure 4.</b> The wire is a straight line through the matching points on both faces, extended out to the towers. On a taper, the tower at the big end moves <b>more</b> than its face and the tower at the small end moves <b>less</b>. On a strong taper it can even move backwards. That's why you can't just type face coordinates into the controller.</figcaption></figure>
+
+  <h3>What each Cut setting does</h3>
+  <div class="set">
+    <div>Start at</div><div><i>Auto</i> starts airfoils at the trailing edge and DXFs at the drawing's first point, which is what DevFoam did. <i>Top-left corner</i> is the other option.</div>
+    <div>Start point X / Y</div><div>Where the wire goes before it cuts in, in the air above or in front of the part. Leave it blank for automatic. Make sure the move there doesn't pass through foam.</div>
+    <div>Kerf, left / right</div><div>How far the wire runs <em>outside</em> the outline on each face, in mm per side, so the part comes out at size. Melt depends on heat and speed, so set it from a test cut.</div>
+    <div>Speed</div><div>mm/min along the faster tower. The file uses inverse-time feed (G93), so each F number is "1 ÷ minutes for this move", not a speed. Don't edit F values by hand.</div>
+    <div>Point spacing</div><div>About 1 mm, like DevFoam. Smaller makes longer files with no real gain.</div>
+  </div>
+  <figure class="fig"><img src="img/kerf.svg" alt="Kerf compensation: the wire path runs 1.5 mm outside the part outline, arcs around outside corners, and meets in a point at inside corners." width="760" height="300">
+    <figcaption><b>Figure 5.</b> The wire runs outside the outline by the kerf. On outside corners it swings around in an arc so the corner stays sharp. On inside corners it can't reach the very corner, which comes out rounded to about the kerf radius.</figcaption></figure>
+
+  <h3 id="where">Where the part sits</h3>
+  <p><i>Part front X</i> and <i>Part bottom Y</i> place the part's nearest-front, lowest point measured <b>from where you zero the wire</b>. If you zero at the front edge of the table at table height (Figure 1), and the block is squared to that edge, then:</p>
+  <ul>
+    <li><b>Part front X</b> = the foam you leave in front of the part, about 75 mm (3 in).</li>
+    <li><b>Part bottom Y</b> = the foam you leave under the part, enough that the wire never reaches the table.</li>
+  </ul>
+  <div class="note"><span class="tag">Confirm</span><p style="margin:0">The shop's last DevFoam job placed the part at 2 mm / 2 mm. That only works if the wire was zeroed at the block's front-bottom corner rather than the table edge. Agree with shop staff on one zeroing habit and use it every time.</p></div>
+  <figure class="fig"><img src="img/path.svg" alt="Side view of a cut path: rapid to the start point, straight lead-in to the outline, once around the outline, and back out to the start point." width="760" height="300">
+    <figcaption><b>Figure 6.</b> Every program runs the same way: a rapid move to the start point, a straight lead-in, once around the outline, back out to the start point, then stop.</figcaption></figure>
+
+  <!-- 6 -->
+  <h2 id="check">6. Check it before you cut</h2>
+  <ol class="steps">
+    <li><div><b>Warnings box (right).</b> Fix anything orange before you download. A tower going below zero, past its travel limit, or a start point inside the part are all real problems.</div></li>
+    <li><div><b>Tower ranges.</b> <i>Tower X / A range</i> and <i>Y / Z range</i> show the farthest each tower must go. Once the travel limits are entered under <b>Machine</b>, the app warns you automatically. (<em>Confirm:</em> the shop still needs to measure them.)</div></li>
+    <li><div><b>Side view.</b> Solid blue and orange are the cut on each face. Dashed lines are the tower paths. The tan box is the foam block. Nothing should touch the table line.</div></li>
+    <li><div><b>Play.</b> Watch the wire go around once at 50×. Clicking a line in the G-code jumps the preview to that move.</div></li>
+    <li><div><b>Preview .nc</b> loads any finished file, including old DevFoam files. Use it instead of GRBL Hotwire's preview.</div></li>
+  </ol>
+
+  <!-- 7 -->
+  <h2 id="foam">7. Prepare the foam</h2>
+  <figure class="fig"><img src="img/block.svg" alt="Top view of the table: block squared to the front edge, half-width mark aligned with the table center mark, about 25 mm extra each side and 75 mm front and back." width="760" height="330">
+    <figcaption><b>Figure 7.</b> Size the block with margin all round, square it to the front edge, and center it. Centering matters most on tapered cuts.</figcaption></figure>
+  <ul>
+    <li><b>Height:</b> as bought (over 2 in). Extra height is fine.</li>
+    <li><b>Width</b> (the direction between the faces): part width + about 25 mm (1 in) each side.</li>
+    <li><b>Length</b> (front to back): longest chord + about 75 mm (3 in) front and back.</li>
+    <li>Mark the half-width on the block's front face and line it up with the table's center mark.</li>
+    <li>Square the block to the front edge of the vacuum table. To square a rough block, cut it first with a straight vertical pass.</li>
+  </ul>
+
+  <!-- 8 -->
+  <h2 id="run">8. Run the cut</h2>
+  <h3>Set up</h3>
+  <ol class="walk">
+    <li>Roll the machine outside. Clear the rails, check the table is squared and planked, and tension the wire.</li>
+    <li>With the power supply <b>off</b> (wire cold), release the e-stop and turn the machine on.</li>
+    <li>Put the vacuum on its own stool with the hose connected and the vacuum <b>off</b>.</li>
+    <li>Open GRBL Hotwire, plug in USB, pick the COM port and connect.</li>
+    <li>Jog forward and down, run the homing cycle, then jog the wire to the front edge of the table, square it to the table, and <b>zero all axes</b> there.</li>
+  </ol>
+  <h3>Set the heat</h3>
+  <ol class="walk">
+    <li>Make test cuts in scrap at your program's speed.</li>
+    <li>Adjust current until the wire doesn't drag behind (no bow in the wire) and the kerf is about 1.5 mm each side.</li>
+    <li>If the slot is wider or narrower than your kerf setting, change <i>Kerf</i> in the app and download again.</li>
+  </ol>
+  <h3>Cut</h3>
+  <ol class="walk">
+    <li><b>Dry run:</b> wire cold, no foam. Run the whole program and watch it.</li>
+    <li>Load the block, square and center it (Figure 7).</li>
+    <li>Load the .nc file in GRBL Hotwire. Send the setup lines with <i>Send line</i>, move to the start point, then jog to the highest and farthest-back point of the cut to confirm the block fits.</li>
+    <li>Vacuum on. Power supply on. <b>Start.</b> Stay with it the whole time.</li>
+    <li>Lower the heat when the wire exits a cutout or re-traces a line. Turn the wire off as soon as the program ends.</li>
+  </ol>
+
+  <!-- 9 -->
+  <h2 id="after">9. After the cut</h2>
+  <ul>
+    <li>Check the part against a full-size paper print of the DXF. If it's small all round, reduce kerf (or heat). If it's big all round, increase kerf.</li>
+    <li>Write the kerf, speed and heat that worked on your setup file (<b>Save</b>), so the next cut starts from known numbers.</li>
+    <li><b>Shut down:</b> power supply off, vacuum off, return to zero, disconnect, press the e-stop, unplug, roll inside.</li>
+  </ul>
+
+  <!-- 10 -->
+  <h2 id="trouble">10. Troubleshooting</h2>
+  <div class="table-wrap"><table class="wide">
+    <thead><tr><th>What you see</th><th>Likely cause</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Wire bows behind its carriages</td><td>Too cold for the speed</td><td>More current, or lower <i>Speed</i></td></tr>
+      <tr><td>Wide, melted slot; rounded edges</td><td>Too hot for the speed</td><td>Less current, or more <i>Speed</i>; re-measure kerf</td></tr>
+      <tr><td>Part small (or big) all round</td><td>Kerf setting doesn't match the real melt</td><td>Change <i>Kerf</i> by half the error per side</td></tr>
+      <tr><td>Tapered surface twisted or wavy between two different shapes</td><td>The faces are matched at the wrong points</td><td>Add <a href="#sync">sync points</a> at the features that should line up</td></tr>
+      <tr><td>Taper twisted or swept the wrong way</td><td>dX / dY sign or <i>Measured at</i> point</td><td>Check in 3D; flip the sign; confirm the reference point matches your CAD measurement</td></tr>
+      <tr><td>Part mirrored front to back</td><td>DXF leading edge was on the right</td><td>Re-export, or tick <i>Drawing's left side to the back</i></td></tr>
+      <tr><td>"A tower goes to X −… mm, in front of zero"</td><td>Part too close to zero, or a taper pushing a tower past it</td><td>Raise <i>Part front X</i>, or move the start point</td></tr>
+      <tr><td>Wire hits the table</td><td>Part bottom too low, or zero set above the table</td><td>Raise <i>Part bottom Y</i>; re-zero</td></tr>
+      <tr><td>Start move cuts through foam</td><td>Start point inside the block</td><td>Set <i>Start point X / Y</i> in the air, above or in front</td></tr>
+      <tr><td>GRBL Hotwire preview looks wrong</td><td>Its preview doesn't handle these files well</td><td>Use <b>Preview .nc</b> in Hotwire Studio</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- 11 -->
+  <h2 id="quiz">11. Check yourself</h2>
+  <details class="q"><summary>On a tapered wing, why can't the towers just follow the root and tip outlines?</summary><p>The towers sit outside the faces. The wire is a straight line through matching points on the two faces, so each tower has to be where that line, extended, meets it. The root-side tower ends up tracing a bigger shape than the root and the tip-side tower a smaller one than the tip. The app works this out for every point.</p></details>
+  <details class="q"><summary>Your part is 3 mm too short and 3 mm too thin. What do you change?</summary><p>The wire is melting 1.5 mm more per side than the kerf setting allows for. Either raise <i>Kerf</i> by 1.5 mm per side, or cool the wire and re-run a test cut. Change one thing at a time.</p></details>
+  <details class="q"><summary>A line in the file ends in <code>F200.2654</code>. Is that the speed?</summary><p>No. The file is in G93 inverse-time mode, so F is 1 ÷ (minutes for that move). A 1 mm move at 200 mm/min takes 0.005 min, which gives F200. Don't edit F values by hand; change <i>Speed</i> in the app.</p></details>
+  <details class="q"><summary>Where is zero, and what has to be true when you set it?</summary><p>The wire at the front edge of the vacuum table, at table height, squared to the table, set after homing. <i>Part front X</i> and <i>Part bottom Y</i> are measured from there.</p></details>
+  <details class="q"><summary>What has to happen before you turn the power supply on for a real cut?</summary><p>Outdoors, rails clear, wire tensioned, homed and zeroed, heat set on test cuts, a dry run with the wire cold, block squared and centered, fit confirmed at the highest and farthest-back point, vacuum on, and someone staying with the machine.</p></details>
+
+  <!-- 12 -->
+  <h2 id="card">12. Quick reference card</h2>
+  <div class="card">
+    <div class="draft">DRAFT · NOT FOR POSTING</div>
+    <h3>Hot-wire cutter: every cut</h3>
+    <div class="cols2">
+      <div><b>Make the file</b><ol>
+        <li>OnShape face → DXF R12, mm, leading edge left</li>
+        <li>Hotwire Studio: load faces, set width, placement, kerf, speed</li>
+        <li>No warnings · Play once · Download G-code</li>
+      </ol></div>
+      <div><b>Set up</b><ol>
+        <li>Outside · rails clear · wire tensioned</li>
+        <li>Wire cold · e-stop released · machine on</li>
+        <li>GRBL Hotwire: connect · home · zero at table front edge</li>
+        <li>Test cuts → heat for ~1.5 mm kerf/side</li>
+      </ol></div>
+      <div><b>Cut</b><ol>
+        <li>Dry run, wire cold, no foam</li>
+        <li>Block squared + centered · fit check high / back</li>
+        <li>Vacuum on · heat on · Start · stay with it</li>
+        <li>Lower heat on exits · wire off at end</li>
+      </ol></div>
+      <div><b>Finish</b><ol>
+        <li>Check against paper print · note kerf</li>
+        <li>PSU off · vacuum off · return to zero</li>
+        <li>Disconnect · e-stop · unplug · roll inside</li>
+      </ol></div>
+    </div>
+  </div>
+  <button class="printbtn" type="button" onclick="document.body.classList.add('print-card');window.print();setTimeout(()=>document.body.classList.remove('print-card'),500)">Print this card</button>
+
+  <!-- 13 -->
+  <h2 id="signoff">13. Competency sign-off</h2>
+  <p>Do each of these in front of shop staff. The ticks below are saved in this browser as a study copy only. The real record is the shop's sign-off.</p>
+  <div class="checkhead"><h3 style="margin:0">Checklist</h3><span class="count" id="count"></span></div>
+  <div class="checks" id="checks">
+    <label><input type="checkbox">States the safety rules and shows the e-stop<small>Outdoors, never unattended, wire cold to touch, dry run first</small></label>
+    <label><input type="checkbox">Exports a face from OnShape correctly<small>DXF R11/12, mm, leading edge left, one face per file</small></label>
+    <label><input type="checkbox">Builds a straight cut in Hotwire Studio<small>Explains width, placement, kerf, speed and start point</small></label>
+    <label><input type="checkbox">Builds a tapered cut<small>Two faces, dX / dY offset, checks it in 3D</small></label>
+    <label><input type="checkbox">Reads warnings and tower ranges, and previews the cut</label>
+    <label><input type="checkbox">Sizes, squares and centers a foam block</label>
+    <label><input type="checkbox">Homes, zeroes at the table front edge, and dry-runs with the wire cold</label>
+    <label><input type="checkbox">Sets wire heat with test cuts<small>No wire lag, kerf measured</small></label>
+    <label><input type="checkbox">Runs a cut start to finish<small>Heat down on exits, wire off at the end</small></label>
+    <label><input type="checkbox">Checks the part against a paper print and adjusts kerf</label>
+    <label><input type="checkbox">Shuts down and stores the machine</label>
+  </div>
+  <div class="signoff"><div>Trainee name</div><div>Signed off by (shop staff)</div><div>Date</div></div>
+
+  <div class="foot">Based on the shop's hot-wire SOP (2026-09-14) and a DevFoam Pro 3 job from SP26 that Hotwire Studio reproduces in testing. Turntable (5th axis) cuts aren't covered yet. Report mistakes to shop staff.</div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'hotwire-training-checks', boxes = document.querySelectorAll('#checks input'), saved = [];
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) {}
+  function count() { var n = 0; boxes.forEach(function (b) { if (b.checked) n++; }); document.getElementById('count').textContent = n + ' / ' + boxes.length; }
+  boxes.forEach(function (b, i) {
+    b.checked = !!saved[i];
+    b.addEventListener('change', function () {
+      var s = []; boxes.forEach(function (x) { s.push(x.checked); });
+      try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+      count();
+    });
+  });
+  count();
+})();
+</script>
+</body>
+</html>
