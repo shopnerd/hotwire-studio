@@ -6,3 +6,5 @@ node_modules/
 *.pem
 __pycache__/
 .netlify/
+HANDOFF-*.md
+test/out/

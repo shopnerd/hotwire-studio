@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hotwire Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22%3E%3Crect x=%224%22 y=%226%22 width=%224%22 height=%2830%22 fill=%22%231f2328%22/%3E%3Crect x=%2232%22 y=%226%22 width=%224%22 height=%2830%22 fill=%22%231f2328%22/%3E%3Cpath d=%22M6 14 L34 18%22 stroke=%22%23d9480f%22 stroke-width=%222.5%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand">
+    <svg viewBox="0 0 40 16" aria-hidden="true"><rect x="1" y="1" width="3" height="14"/><rect x="36" y="1" width="3" height="14"/><path d="M3 5 L37 7" class="wire"/></svg>
+    <span>Hotwire&nbsp;Studio</span>
+  </div>
+  <input id="designName" class="name" value="Untitled cut" aria-label="Cut name" spellcheck="false">
+  <div class="bar-actions">
+    <select id="exampleSel" aria-label="Load an example">
+      <option value="">Examples…</option>
+    </select>
+    <label class="btn" title="Preview any .nc / .gcode file, e.g. one DevFoam made">Preview .nc<input id="fileNc" type="file" accept=".nc,.gcode,.ngc,.tap,.txt" hidden></label>
+    <button id="btnSave" title="Download this setup as JSON">Save</button>
+    <label class="btn" title="Open a saved setup">Open<input id="fileOpen" type="file" accept=".json,application/json" hidden></label>
+    <button id="btnDownload" class="primary" title="Download the G-code for GRBL Hotwire">Download G-code</button>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="params" id="params" aria-label="Cut settings">
+
+    <section>
+      <h2><span class="sw sw-l"></span>Left face <small>X / Y tower</small></h2>
+      <label class="row"><span>Shape</span>
+        <select data-k="left.kind"><option value="naca">NACA 4-digit</option><option value="file">From file (DXF / .dat)</option></select></label>
+      <label class="row" data-show="left.kind=naca"><span>NACA code</span><input data-k="left.naca" maxlength="4" inputmode="numeric"></label>
+      <div class="row" data-show="left.kind=file"><span>File</span>
+        <label class="btn small file-btn">Load…<input type="file" data-file="left" accept=".dxf,.dat,.txt" hidden></label>
+        <span class="fname" id="fnameLeft">none</span></div>
+      <label class="row"><span>Chord / length</span><input data-k="left.chord" type="number" step="0.1"><em>mm</em></label>
+      <label class="row"><span>Rotation</span><input data-k="left.rot" type="number" step="0.1"><em>° nose up</em></label>
+    </section>
+
+    <section>
+      <h2><span class="sw sw-r"></span>Right face <small>A / Z tower</small></h2>
+      <label class="row"><span>Shape</span>
+        <select data-k="right.kind"><option value="same">Same as left</option><option value="naca">NACA 4-digit</option><option value="file">From file (DXF / .dat)</option></select></label>
+      <label class="row" data-show="right.kind=naca"><span>NACA code</span><input data-k="right.naca" maxlength="4" inputmode="numeric"></label>
+      <div class="row" data-show="right.kind=file"><span>File</span>
+        <label class="btn small file-btn">Load…<input type="file" data-file="right" accept=".dxf,.dat,.txt" hidden></label>
+        <span class="fname" id="fnameRight">none</span></div>
+      <label class="row"><span>Chord / length</span><input data-k="right.chord" type="number" step="0.1"><em>mm</em></label>
+      <label class="row"><span>Rotation</span><input data-k="right.rot" type="number" step="0.1"><em>° nose up</em></label>
+      <label class="row"><span>Offset dX</span><input data-k="right.dx" type="number" step="0.001"><em>mm</em></label>
+      <label class="row"><span>Offset dY</span><input data-k="right.dy" type="number" step="0.001"><em>mm</em></label>
+      <label class="row"><span>Measured at</span>
+        <select data-k="ref"><option value="bbox">Lower-left of outline</option><option value="le">Leading edge point</option><option value="te">Trailing edge point</option></select></label>
+      <p class="hint">Type the dX / dY between the faces here. This replaces DevFoam's offset tool, and you don't need to re-draw anything.</p>
+    </section>
+
+    <section>
+      <h2>Placement</h2>
+      <label class="row"><span>Part width</span><input data-k="width" type="number" step="0.1"><em>mm</em></label>
+      <label class="row check"><input data-k="center" type="checkbox"><span>Centered between towers</span></label>
+      <label class="row" data-show="center=false"><span>Left face from left tower</span><input data-k="leftPos" type="number" step="0.1"><em>mm</em></label>
+      <label class="row"><span>Part front X</span><input data-k="frontX" type="number" step="0.1"><em>mm</em></label>
+      <label class="row"><span>Part bottom Y</span><input data-k="bottomY" type="number" step="0.1"><em>mm</em></label>
+      <label class="row check"><input data-k="flip" type="checkbox"><span>Drawing's left side to the back</span></label>
+    </section>
+
+    <section>
+      <h2>Cut</h2>
+      <label class="row"><span>Start at</span>
+        <select data-k="start"><option value="auto">Auto</option><option value="te">Trailing edge</option><option value="first">Drawing's first point</option><option value="topleft">Top-left corner</option></select></label>
+      <label class="row"><span>Start point X</span><input data-k="startX" type="number" step="0.1" placeholder="auto"><em>mm</em></label>
+      <label class="row"><span>Start point Y</span><input data-k="startY" type="number" step="0.1" placeholder="auto"><em>mm</em></label>
+      <label class="row"><span>Kerf, left</span><input data-k="kerfL" type="number" step="0.05" min="0"><em>mm / side</em></label>
+      <label class="row"><span>Kerf, right</span><input data-k="kerfR" type="number" step="0.05" min="0"><em>mm / side</em></label>
+      <label class="row"><span>Speed</span><input data-k="speed" type="number" step="10" min="1"><em>mm / min</em></label>
+      <label class="row"><span>Point spacing</span><input data-k="spacing" type="number" step="0.1" min="0.1"><em>mm</em></label>
+    </section>
+
+    <section>
+      <h2>Foam block</h2>
+      <label class="row"><span>Length</span><input data-k="block.length" type="number" step="1" placeholder="auto"><em>mm, 0 = auto</em></label>
+      <label class="row"><span>Height</span><input data-k="block.height" type="number" step="1"><em>mm</em></label>
+      <label class="row"><span>Extra each side</span><input data-k="block.margin" type="number" step="1"><em>mm</em></label>
+    </section>
+
+    <section>
+      <h2>Machine</h2>
+      <label class="row"><span>Wire span</span><input data-k="machine.span" type="number" step="0.01"><em>mm</em></label>
+      <label class="row"><span>X travel</span><input data-k="machine.maxX" type="number" step="1" placeholder="unknown"><em>mm, 0 = skip</em></label>
+      <label class="row"><span>Y travel</span><input data-k="machine.maxY" type="number" step="1" placeholder="unknown"><em>mm, 0 = skip</em></label>
+    </section>
+  </aside>
+
+  <section class="views">
+    <div class="viewbox">
+      <div class="vhead"><strong>Side view</strong> <span class="muted">looking along the wire</span>
+        <div class="legend"><span><i class="ln part"></i>Part</span><span><i class="ln l"></i>Left face cut</span><span><i class="ln r"></i>Right face cut</span><span><i class="ln dl"></i>Left tower</span><span><i class="ln dr"></i>Right tower</span></div>
+        <button class="small ghost" data-fit="side">Fit</button></div>
+      <canvas id="cvSide"></canvas>
+    </div>
+    <div class="viewbox">
+      <div class="vhead"><strong>3D</strong>
+        <div class="seg" id="view3d"><button data-v="iso" class="on">Iso</button><button data-v="top">Top</button><button data-v="front">Front</button><button data-v="side">Side</button></div>
+        <span class="muted">drag to turn, scroll to zoom</span></div>
+      <canvas id="cv3d"></canvas>
+    </div>
+    <div class="sim">
+      <button id="btnPlay" class="small" aria-label="Play">Play</button>
+      <select id="simSpeed" aria-label="Playback speed"><option value="1">1×</option><option value="10">10×</option><option value="50" selected>50×</option><option value="200">200×</option></select>
+      <input id="simT" type="range" min="0" max="1000" value="0" aria-label="Position in program">
+      <span id="simRead" class="mono"></span>
+    </div>
+  </section>
+
+  <aside class="out">
+    <div class="srcbar" id="srcBar"></div>
+    <div id="stats" class="stats"></div>
+    <div id="msgs"></div>
+    <div class="code" id="code" aria-label="G-code"></div>
+  </aside>
+</main>
+
+<script src="js/geom.js"></script>
+<script src="js/dxf.js"></script>
+<script src="js/machine.js"></script>
+<script src="js/examples.js"></script>
+<script src="js/views.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

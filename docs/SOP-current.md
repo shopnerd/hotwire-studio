@@ -1,4 +1,8 @@
-# Hotwire CNC SOP (current workflow, as supplied by Will 2026-09-14)
+# Hotwire CNC SOP (current workflow, as of 2026-09-14)
+
+> Update 2026-10-30, from a real DevFoam cut (`docs/samples/payload-foam-floor`): DevFoam writes **G93 inverse-time feed**
+> (each F = 1 / minutes for that move); cut speed was **200 mm/min**; kerf compensation was **1.5 mm per side**.
+> That settles the speed and kerf questions below.
 
 Source of truth for how the shop cuts today. The web app replaces the DevFoam step (and the buggy preview in GRBL Hotwire); the machine side stays.
 
